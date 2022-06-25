@@ -1,0 +1,15 @@
+class User < ApplicationRecord
+
+    validates :name, uniqueness: true
+    validates :token, uniqueness: true
+
+    has_many :blackjacks
+    has_many :games, through: :blackjacks
+
+    before_create :set_token
+    
+    def set_token
+        self.token = SecureRandom.uuid
+    end
+    
+end
