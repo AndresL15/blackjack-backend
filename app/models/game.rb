@@ -1,8 +1,9 @@
 class Game < ApplicationRecord
 
-    has_many :blackjacks, dependent: :destroy
-    has_many :users, through: :blackjacks
+    has_many :users
 
     validates :name, uniqueness: true
+
+    enum state: {jugando: 0, terminado: 1}
 
 end

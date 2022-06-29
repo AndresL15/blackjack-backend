@@ -1,7 +1,9 @@
 class UsersController < ApplicationController
 
     before_action :set_user, only:[:show]
-    before_action :check_token, only:[:login, :logout]
+    before_action :set_user_j, only:[:join]
+    before_action :set_user_n, only:[:login]
+    before_action :set_game, only:[:join]
 
     def create
         @user = User.create(params_user)
@@ -17,7 +19,6 @@ class UsersController < ApplicationController
     end
 
     def login
-        @user = User.find_by(name: params[:name])
         if @user.blank? || @user.password != params[:password]
             render status: 404, json: { message: "Datos incorrectos"}
         elsif 
@@ -30,35 +31,61 @@ class UsersController < ApplicationController
         if @user.blank?
             render status: 404, json: { message: "No se encontro ese user"}
         else
-            render status: 200, json: { name: @user.name }
+            render status: 200, json: { id: @user.id, name: @user.name }
+        end
+    end
+
+    def join
+        @game.users << @user
+        if @user.update(params_join)
+            render status: 200, json: { id: @game.id }
+        else
+            render status: 404, json: { message: "No pudo entrar al juego" }
         end
     end
 
     def logout
-        @user = User.find_by(token: params[:token])
-        if @user.blank?
-            render status: 200, json: { message: "Logout correcto"}
-        else
-            render status: 404, json: { message: "No se encontro ese user"}
-        end
+        render status: 200, json: { message: "Logout correcto"}
     end
 
     private
-
-        def check_token
-            return if request.headers["Authorization"] == "Bearer " + @user.token
-            render status: 401 
-            false
-        end
         
         def params_user
             params.require(:user).permit(:name, :password)
+        end
+
+        def params_join
+            params.require(:user).permit(:game_id)
         end
 
         def set_user
             @user = User.find_by(id: params[:id])
             if @user.blank?
                 render status: 404, json: { message: "No se encontro ese user: #{params[:id] }"}
+                false
+            end
+        end
+
+        def set_user_j
+            @user = User.find_by(id: params[:user_id])
+            if @user.blank?
+                render status: 404, json: { message: "No se encontro ese user: #{params[:id] }"}
+                false
+            end
+        end
+
+        def set_user_n
+            @user = User.find_by(name: params[:name])
+            if @user.blank?
+                render status: 404, json: { message: "No se encontro ese user: #{params[:name] }"}
+                false
+            end
+        end     
+
+        def set_game
+            @game = Game.find_by(id: params[:game_id])
+            if @game.blank?
+                render status: 404, json: { message: "No se encontro ese juego #{params[:game_id] }"}
                 false
             end
         end

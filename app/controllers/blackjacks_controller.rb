@@ -2,23 +2,8 @@ class BlackjacksController < ApplicationController
 
     before_action :set_game, only:[:join, :refresh]
     before_action :set_user, only:[:join]
-
-    def join
-        @blackjack = Blackjack.create()
-        @user.blackjacks << @blackjack
-            @game.blackjacks << @blackjack
-        if @blackjack.persisted?
-            
-            render status: 200, json: { blackjack: @blackjack }
-        else
-            render status: 404, json: { message: "No se pudo crear el blackjack: #{ @blackjack.errors.details }" }
-        end
-    end
     
-    def refresh
-        @blackjack = @game.blackjacks
-        render status: 200, json: { blackjack: @blackjack }
-    end
+   
 
     private
 

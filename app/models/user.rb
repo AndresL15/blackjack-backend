@@ -3,8 +3,7 @@ class User < ApplicationRecord
     validates :name, uniqueness: true
     validates :token, uniqueness: true
 
-    has_many :blackjacks
-    has_many :games, through: :blackjacks
+    enum state: {jugando: 0, detenido: 1}
 
     before_create :set_token
     
