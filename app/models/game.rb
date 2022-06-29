@@ -4,6 +4,4 @@ class Game < ApplicationRecord
 
     validates :name, uniqueness: true
 
-    enum state: {jugando: 0, terminado: 1}
-
 end

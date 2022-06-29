@@ -3,8 +3,6 @@ class BlackjacksController < ApplicationController
     before_action :set_game, only:[:join, :refresh]
     before_action :set_user, only:[:join]
     
-   
-
     private
 
         def set_game

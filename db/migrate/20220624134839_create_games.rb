@@ -3,7 +3,7 @@ class CreateGames < ActiveRecord::Migration[7.0]
     create_table :games do |t|
       t.string :name
       t.string :deck
-      t.string :state
+      t.string :desc
       t.string :winner
 
       t.timestamps

@@ -1,10 +1,11 @@
 class GamesController < ApplicationController
 
-    before_action :set_game, only:[:refresh, :newgame, :dragcard, :winner]
-    before_action :set_user, only:[:dragcard, :stop]
-    before_action :check_stop, only:[:dragcard, :stop]
+    before_action :set_game, only:[:join, :newgame, :refresh, :dragcard, :winner]
+    before_action :set_user, only:[:create, :join, :newgame, :dragcard]
+    before_action :check_token, only:[:create, :join, :newgame, :dragcard]
+    before_action :check_players, only:[:join]
+    before_action :check_stop, only:[:dragcard]
     before_action :check_full_stop, only:[:winner]
-
 
     def index
         @games = Game.all
@@ -20,12 +21,30 @@ class GamesController < ApplicationController
         end
     end
 
+    def join
+        @game.users << @user
+        if @user.save
+            render status: 200, json: { id: @game.id }
+        else
+            render status: 404, json: { message: "No pudo entrar al juego" }
+        end
+    end
+
     def refresh
         @players = @game.users
         render status: 200, json: { players: @players }
     end
 
     def newgame
+        players = @game.users
+
+        for i in 0..1 do
+            player = players[i]
+            state = nil
+            points = 0
+            player.update(state: state, points: points)
+        end
+
         deck = [];
         tipos = ['C','D','H','S'];
         especiales = ['A','J','Q','K'];
@@ -55,7 +74,8 @@ class GamesController < ApplicationController
     end
 
     def dragcard
-        deck = @game.deck.split(',')
+        str = @game.deck
+        deck = str.split(',')
         card = deck.pop
         v = card[0,(card.length - 1)]
 
@@ -74,50 +94,80 @@ class GamesController < ApplicationController
         points = @user.points
         points = "#{points.to_i + value.to_i}"
         if points.to_i > 21 
-            @user.update(points: value, state: 1)
-            render status: 200, json: { card: card, value: value }
+            @user.update(points: points, state: 1)
+            render status: 200, json: { card: card }
         elsif @game.update(deck: ndeck) && @user.update(points: points)
-            render status: 200, json: { card: card, value: points }
+            render status: 200, json: { card: card }
         else
             render status: 404, json: { message: "No pudo sacar una carta" }
         end
     end
 
-    def stop
-        state = 1
-        if @user.update(state: state)
-            render status: 200, json: { message: "El jugador se detuvo" }
-        else
-            render status: 404, json: { message: "No se pudo parar el state" }
-        end
-    end
-
     def winner
+        #if @game.winner != nil
+        #    render status: 200, json: { message: "Juego terminado" }
+        #end
+
         players = @game.users
+
+        if players[0].points > 21 && players[1].points > 21
+            winner = "Draw"
+            if @game.update(winner: winner)
+                return render status: 200, json: { message: "Empate" }
+            else
+                return render status: 404, json: { message: "No se pudo cerrar el juego" }
+            end 
+        end
+        
         if players[0].points > 21
             winner = players[1].name
-        elsif players[1].points > 21
-            winner = players[0].name
-        elsif players[0].points < players[1].points
-            winner = players[1].name
-        else
-            winner = players[0].name
-        end   
-    end
-
-    def finish
-        state = 1
-        if @game.update(state: state)
-            render status: 200, json: { message: "Se cerro el juego" }
-        else
-            render status: 404, json: { message: "No se pudo cerrar el juego" }
+            if @game.update(winner: winner)
+                return render status: 200, json: { winner: winner }
+            else
+                return render status: 404, json: { message: "No se pudo cerrar el juego" }
+            end 
         end
+
+        if players[1].points > 21
+            winner = players[0].name
+            if @game.update(winner: winner)
+                return render status: 200, json: { winner: winner }
+            else
+                return render status: 404, json: { message: "No se pudo cerrar el juego" }
+            end 
+        end
+
+        if players[0].points < players[1].points
+            winner = players[1].name
+            if @game.update(winner: winner)
+                return render status: 200, json: { winner: winner }
+            else
+                return render status: 404, json: { message: "No se pudo cerrar el juego" }
+            end 
+        else
+            winner = players[0].name
+            if @game.update(winner: winner)
+                return render status: 200, json: { winner: winner }
+            else
+                return render status: 404, json: { message: "No se pudo cerrar el juego" }
+            end 
+        end  
     end
 
     private
 
+        def check_token
+            return if request.headers["Authorization"] == "Bearer " + @user.token
+            render status: 401, json: { message: "Jugador no autorizado"}
+            false
+        end
+        
         def params_game
-            params.require(:game).permit(:name)
+            params.require(:game).permit(:name, :desc)
+        end
+
+        def params_join
+            params.require(:user).permit(:game_id)
         end
 
         def set_game
@@ -136,6 +186,18 @@ class GamesController < ApplicationController
             end
         end
 
+        def check_players
+            players = @game.users
+            for i in 0..1 do
+                if players[i] != nil
+                    if request.headers["Authorization"] == "Bearer " + players[i].token 
+                        render status: 200, json: { id: @game.id }           
+                    end
+                end
+            end
+            return
+        end
+
         def check_stop
             return if @user.state == nil
             render status: 404, json: { message: "Error al parar el juego" }
@@ -143,7 +205,7 @@ class GamesController < ApplicationController
 
         def check_full_stop
             players = @game.users
-            return if players[0].state == 1 && players[1].state == 1
+            return if players[0].state == "1" && players[1].state == "1"
             render status: 404, json: { message: "Hay jugadores que todavia no se detienen" }
         end
         
