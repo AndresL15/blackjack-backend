@@ -10,16 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_06_25_180918) do
-  create_table "blackjacks", force: :cascade do |t|
-    t.integer "user_id", null: false
-    t.integer "game_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["game_id"], name: "index_blackjacks_on_game_id"
-    t.index ["user_id"], name: "index_blackjacks_on_user_id"
-  end
-
+ActiveRecord::Schema[7.0].define(version: 2022_06_24_134839) do
   create_table "games", force: :cascade do |t|
     t.string "name"
     t.string "deck"
@@ -34,6 +25,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_06_25_180918) do
     t.string "password"
     t.string "token"
     t.string "state"
+    t.string "cards", default: ""
     t.integer "points"
     t.integer "game_id"
     t.datetime "created_at", null: false
@@ -41,6 +33,4 @@ ActiveRecord::Schema[7.0].define(version: 2022_06_25_180918) do
     t.index ["game_id"], name: "index_users_on_game_id"
   end
 
-  add_foreign_key "blackjacks", "games"
-  add_foreign_key "blackjacks", "users"
 end

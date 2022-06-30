@@ -42,7 +42,8 @@ class GamesController < ApplicationController
             player = players[i]
             state = nil
             points = 0
-            player.update(state: state, points: points)
+            cards = ""
+            player.update(state: state, points: points, cards: cards)
         end
 
         deck = [];
@@ -90,14 +91,16 @@ class GamesController < ApplicationController
         end
 
         ndeck = deck.join(",")
-
+        cardarr = @user.cards.split(',')
+        cards = cardarr.push(card)  
+        fcard = cards.join(",")
         points = @user.points
         points = "#{points.to_i + value.to_i}"
         if points.to_i > 21 
-            @user.update(points: points, state: 1)
-            render status: 200, json: { card: card }
-        elsif @game.update(deck: ndeck) && @user.update(points: points)
-            render status: 200, json: { card: card }
+            @user.update(points: points, state: 1, cards: fcard)
+            render status: 200, json: { message: "DragCarta exito" }
+        elsif @game.update(deck: ndeck) && @user.update(points: points, cards: fcard)
+            render status: 200, json: { message: "DragCarta exito" }
         else
             render status: 404, json: { message: "No pudo sacar una carta" }
         end

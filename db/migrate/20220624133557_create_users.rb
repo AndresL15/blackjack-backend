@@ -5,6 +5,7 @@ class CreateUsers < ActiveRecord::Migration[7.0]
       t.string :password
       t.string :token
       t.string :state
+      t.string :cards, default: ""
       t.integer :points
       t.belongs_to :game
       

@@ -8,5 +8,9 @@ class User < ApplicationRecord
     def set_token
         self.token = SecureRandom.uuid
     end
+
+    #before_validation(on: :create) do
+    #    self.cards = ""
+    #end 
     
 end
